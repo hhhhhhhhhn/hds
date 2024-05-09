@@ -24,21 +24,60 @@ export class Table<T extends Record<string, any>> {
 		return new Table(rows)
 	}
 
-	addComputedRow<U, S extends string>(rowName: S, fn: (row: T) => U): Table<T & { [key in S]: U }> {
+	static fromColumns<T extends Record<string, any>>(columns: {[key in keyof T]: T[key][]}): Table<T> {
+		let headers = Object.keys(columns)
+		let rows: T[] = []
+		for (let i = 0; i < columns[0].length; i++) {
+			let row: any = {}
+			for (let header of headers) {
+				row[header] = columns[header][i]
+			}
+			rows.push(row)
+		}
+		return new Table(rows)
+	}
+
+	static async fromCSV(filename: string): Promise<Table<Record<string, any>>> {
+		let content = await Bun.file(filename).text()
+		return Table.fromCSVString(content)
+	}
+
+	static fromCSVString(content: string): Table<Record<string, any>> {
+		let lines = content.split("\n")
+		let headers = lines[0].split(",")
+		let valueRows = lines.slice(1).map(row => row.split(",")).filter(row => row.length == headers.length)
+
+		let rows: Record<string, any>[] = []
+		for (let valueRow of valueRows) {
+			let row: any = {}
+			if (valueRow.length !== headers.length) {
+				continue
+			}
+			for (let i = 0; i < headers.length; i++) {
+				row[headers[i]] = valueRow[i]
+			}
+			rows.push(row)
+		}
+		console.log(rows)
+		// @ts-ignore
+		return new Table(rows)
+	}
+
+	addComputedColumn<U, S extends string>(columnName: S, fn: (row: T) => U): Table<T & { [key in S]: U }> {
 		let newRows = structuredClone(this.rows)
 		newRows = newRows.map((row) => {
-			return {...row, [rowName]: fn(row)}
+			return {...row, [columnName]: fn(row)}
 		})
 		return new Table(newRows)
 	}
 
-	addRow<U, S extends string>(rowName: S, rowValues: U[]): Table<T & { [key in S]: U }> {
-		if (rowValues.length !== this.rows.length) {
+	addColumn<U, S extends string>(columnName: S, columnValues: U[]): Table<T & { [key in S]: U }> {
+		if (columnValues.length !== this.rows.length) {
 			throw new Error("Row length mismatch")
 		}
 		let newRows = structuredClone(this.rows)
 		newRows = newRows.map((row, i) => {
-			return {...row, [rowName]: rowValues[i]}
+			return {...row, [columnName]: columnValues[i]}
 		})
 		return new Table(newRows)
 	}

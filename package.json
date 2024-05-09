@@ -1,6 +1,9 @@
 {
   "name": "hds",
   "module": "index.ts",
+  "exports": {
+	  ".": "./index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
