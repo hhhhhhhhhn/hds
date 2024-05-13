@@ -20,8 +20,9 @@ function widthIgnoreANSI(text: string): number {
 }
 
 function padCenter(text: string, width: number): string {
-	let left = Math.floor((width - text.length) / 2)
-	let right = width - text.length - left
+	let textWidth = widthIgnoreANSI(text)
+	let left = Math.floor((width - textWidth) / 2)
+	let right = width - textWidth - left
 	return " ".repeat(left) + text + " ".repeat(right)
 }
 
@@ -164,13 +165,61 @@ export class Table<T extends Record<string, any>> {
 		return this.rows.findIndex(fn)
 	}
 
-	plot(x: keyof T, ys?: (keyof T)[]) {
+	bar(x: keyof T = this.headers[0], ys?: (keyof T)[]) {
+		if (ys === undefined) {
+			ys = this.headers.filter(k => k !== x)
+		}
+
+		const xVals = this.column(x)
+
+		const width = process.stdout.columns
+		const textWidth = xVals.map(k => String(k).length).reduce((a, b) => Math.max(a, b))
+		const barWidth = width - textWidth - 2 // -2 for the separator
+
+		let title = ys.map((yName, i) => COLORS[i] + String(yName) + RESET).join(", ")
+		title = "Graph of " + title + " with respect to " + String(x)
+		console.log(padCenter(title, width))
+
+		let maxYVal = this.rows.map(row => ys.map(yName => row[yName] as number).reduce((a, b) => Math.max(a, b))).reduce((a, b) => Math.max(a, b))
+
+		for (let i = 0; i < this.rows.length; i++) {
+			for (let j = 0; j < ys.length; j++) {
+				let line = ""
+				if (j == 0) {
+					line += (this.rows[i][x] as string).padStart(textWidth)
+				} else {
+					line += " ".repeat(textWidth)
+				}
+				line += " |"
+
+				let val = Math.round(this.rows[i][ys[j]]/maxYVal * barWidth)
+
+				line += COLORS[j] + "█".repeat(val) + RESET
+
+				console.log(line)
+			}
+			if (ys.length > 1 && i < this.rows.length - 1) {
+				console.log(" ".repeat(textWidth + 1) + "|")
+			}
+		}
+
+		const X_LABEL_WIDTH = 8
+		let xLabelAmount = Math.floor(barWidth/X_LABEL_WIDTH)
+		let xLabels = Array(xLabelAmount+1).fill(0).map((_, i) => (i/(width/X_LABEL_WIDTH))*maxYVal)
+		let xLabelStrings = xLabels.map(x => padCenter(x.toFixed(2), X_LABEL_WIDTH))
+		console.log(" ".repeat(textWidth + 1) + "├" + ("─".repeat(X_LABEL_WIDTH - 1) + "┬").repeat(xLabelAmount))
+		console.log(" ".repeat(textWidth + 1 - X_LABEL_WIDTH/2) + xLabelStrings.join(""))
+		console.log()
+	}
+
+	plot(x: keyof T = this.headers[0], ys?: (keyof T)[]) {
+		if (ys === undefined) {
+			ys = this.headers.filter(k => k !== x)
+		}
+
 		const parts = process.stdout.columns - 20;
 		const height = Math.round(parts*0.25)
 
-		if (ys === undefined) {
-			ys = Object.keys(this.rows[0]).filter(k => k !== x)
-		}
 		let sorted = this.sortBy(x)
 		let xs = sorted.column(x)
 		let [xMin, xMax] = [xs[0], xs[xs.length-1]]
@@ -219,6 +268,6 @@ export class Table<T extends Record<string, any>> {
 		console.log(plotString)
 		console.log(" ".repeat(offset-1) + "├" + ("─".repeat(X_LABEL_WIDTH - 1) + "┬").repeat(xLabelAmount))
 		console.log(" ".repeat(Math.floor(offset - X_LABEL_WIDTH/2)) + xLabelStrings.join(""))
-
+		console.log()
 	}
 }
