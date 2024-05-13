@@ -1,17 +1,18 @@
 {
   "name": "hds",
   "module": "index.ts",
-  "exports": {
-	  ".": "./index.ts"
-  },
   "devDependencies": {
+    "@types/asciichart": "^1.5.8",
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
+  "exports": {
+    ".": "./index.ts"
+  },
   "type": "module",
   "dependencies": {
-    "nodeplotlib": "^1.1.2"
+    "asciichart": "^1.5.25"
   }
 }
