@@ -3,6 +3,9 @@ import { Console } from "node:console"
 import { Transform } from "node:stream"
 import {plot, red, green, blue, yellow, magenta, cyan} from "asciichart"
 
+import * as stats from "./stats"
+export {stats}
+
 const ts = new Transform({ transform(chunk, _enc, cb) { cb(null, chunk) } })
 const logger = new Console({ stdout: ts })
 
@@ -13,7 +16,6 @@ function tableToString(data: any): string {
 	logger.table(data)
 	return (ts.read() || "").toString()
 }
-
 
 function widthIgnoreANSI(text: string): number {
 	return text.replaceAll("\x1b[", "").replaceAll(/\d+m/g, "").length
