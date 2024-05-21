@@ -167,6 +167,11 @@ export class Table<T extends Record<string, any>> {
 		return this.rows.findIndex(fn)
 	}
 
+	filter(fn: (row: T, index: number) => boolean): Table<T> {
+		let rows = this.rows.filter(fn)
+		return new Table(rows, this.headers)
+	}
+
 	bar(x: keyof T = this.headers[0], ys?: (keyof T)[]) {
 		if (ys === undefined) {
 			ys = this.headers.filter(k => k !== x)
