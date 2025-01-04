@@ -3,8 +3,8 @@ import { Console } from "node:console"
 import { Transform } from "node:stream"
 import {plot, red, green, blue, yellow, magenta, cyan} from "asciichart"
 
-import * as stats from "./stats"
-export {stats}
+import * as utils from "./utils"
+export {utils}
 
 const ts = new Transform({ transform(chunk, _enc, cb) { cb(null, chunk) } })
 const logger = new Console({ stdout: ts })

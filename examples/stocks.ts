@@ -1,4 +1,4 @@
-import {Table, stats} from "../index"
+import {Table, utils} from "../index"
 
 function createSequence(time: number, expret: number, stddev: number): number[] {
 	let price = Array(time)
@@ -20,23 +20,23 @@ const RET = Math.pow(ANNUAL_RETURN, 1/PERIODS_PER_YEAR)
 const STDDEV = ANNUAL_STDDEV/Math.sqrt(PERIODS_PER_YEAR)
 const TIME = PERIODS_PER_YEAR*YEARS
 
-let runs = Array(RUNS).fill(0).map(() => createSequence(TIME, RET, STDDEV))
+let runs = utils.arrayFilledWith(() => createSequence(TIME, RET, STDDEV), RUNS)
 let columns = Object.fromEntries(runs.map((r, i) => [`price ${i+1}`, r]))
-columns["year"] = Array(TIME).fill(0).map((_, i) => i/PERIODS_PER_YEAR)
+columns["year"] = utils.arrayFilledWith((i) => i/PERIODS_PER_YEAR, TIME)
 let table = Table.fromColumns(columns)
 
 let returns = runs.map(r => r[r.length-1])
 
-let [min, q1, q2, q3, max] = stats.quartiles(returns)
-let [avg, stddev] = stats.avgAndStddev(returns)
+let [min, q1, q2, q3, max] = utils.quartiles(returns)
+let [avg, stddev] = utils.avgAndStddev(returns)
 let stddevPerc= (stddev/avg*100).toFixed(2) + "%"
 
 let table2 = table.addComputedColumn("q1", () => q1)
-let table3 = table2.addComputedColumn("med", () => q2)
-let table4 = table3.addComputedColumn("q3", () => q3)
-let table5 = table4.addComputedColumn("avg", () => avg)
+	.addComputedColumn("med", () => q2)
+	.addComputedColumn("q3", () => q3)
+	.addComputedColumn("avg", () => avg)
 
-table5.plot("year", [...Array(10).fill(0).map((_, i) => `price ${i+1}`, ) as any, "q1", "med", "q3", "avg"])
+table2.plot("year", [...utils.arrayFilledWith((i) => `price ${i+1}`, 10) as any, "q1", "med", "q3", "avg"])
 
 console.table({min, q1, q2, q3, max, avg, stddevPerc})
 console.log(`runs with loss: ${returns.filter(x => x < 1).length / returns.length * 100}%`)

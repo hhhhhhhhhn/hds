@@ -11,3 +11,7 @@ export function avgAndStddev(numbers: number[]): [number, number] {
 	let stddev = Math.sqrt(variance)
 	return [avg, stddev]
 }
+
+export function arrayFilledWith<T>(f: (index: number) => T, length: number): T[] {
+	return Array(length).fill(null as T).map((_, i) => f(i))
+}
